@@ -1,11 +1,16 @@
+#requires -Version 3.0
 [CmdletBinding(SupportsShouldProcess)]
 param([string]$InstallationDirectory = (Join-Path $env:LOCALAPPDATA 'CleanZip'))
 
 $ErrorActionPreference = 'Stop'
 $engine = Join-Path ([IO.Path]::GetFullPath($InstallationDirectory)) 'CleanZip.exe'
-$package = Get-AppxPackage -Name CleanZip.SoftwareProjects -ErrorAction SilentlyContinue
-if ($package -and $package.InstallLocation.TrimEnd('\') -eq [IO.Path]::GetFullPath($InstallationDirectory).TrimEnd('\')) {
-    if ($PSCmdlet.ShouldProcess($package.PackageFullName, 'Remove the modern Clean Zip context menu')) { Remove-AppxPackage -Package $package.PackageFullName }
+$packageCommand = Get-Command Get-AppxPackage -ErrorAction SilentlyContinue
+$removePackageCommand = Get-Command Remove-AppxPackage -ErrorAction SilentlyContinue
+if ($packageCommand -and $removePackageCommand) {
+    $package = Get-AppxPackage -Name CleanZip.SoftwareProjects -ErrorAction SilentlyContinue
+    if ($package -and $package.InstallLocation.TrimEnd('\') -eq [IO.Path]::GetFullPath($InstallationDirectory).TrimEnd('\')) {
+        if ($PSCmdlet.ShouldProcess($package.PackageFullName, 'Remove the modern Clean Zip context menu')) { Remove-AppxPackage -Package $package.PackageFullName }
+    }
 }
 foreach ($key in @('HKCU:\Software\Classes\Directory\shell\CleanZip', 'HKCU:\Software\Classes\Directory\Background\shell\CleanZip')) {
     $commandKey = Join-Path $key 'command'

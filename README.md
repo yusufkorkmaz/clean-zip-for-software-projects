@@ -5,7 +5,7 @@ Fast Windows right-click utility for zipping software projects with configurable
 ## Features
 
 - Adds **Clean Zip** to the context menu of a folder and its background.
-- Optional Windows 11 integration shows **Clean Zip** directly in the modern menu.
+- Automatically selects the classic menu on older Windows, or the modern menu on Windows 11 when its prerequisites are present.
 - Skips excluded directories before scanning their contents.
 - Uses a compiled C# scanner and optional 7-Zip compression.
 - Falls back to .NET ZIP compression when 7-Zip is unavailable.
@@ -16,9 +16,17 @@ Fast Windows right-click utility for zipping software projects with configurable
 
 ## Requirements
 
-- Windows with .NET Framework 4.5 or later and its C# compiler.
-- Windows PowerShell or PowerShell on Windows for build and installation.
+- Windows 7 SP1 or later with **.NET Framework 4.5 or later**, including its C# compiler and ZIP assemblies.
+- **PowerShell 3.0 or later** for build and installation. Windows 7 SP1 needs Windows Management Framework 3.0 or later; its default PowerShell 2.0 is insufficient.
 - Optional: 7-Zip installed in the standard `Program Files\7-Zip` directory.
+
+| Windows version | Menu selected by the default installer | Additional modern-menu requirements |
+| --- | --- | --- |
+| Windows 7 SP1, 8, 8.1, 10 (x86/x64) | Classic **Clean Zip** entry | None; uses .NET Framework |
+| Windows 11 x64, prerequisites present | Modern **Clean Zip** entry plus legacy fallback | .NET 10 x64 SDK/runtime and Developer Mode |
+| Windows 11, prerequisites missing, x86 installer process or ARM64 | Classic entry under **Show more options** | None for the classic entry |
+
+The modern extension is isolated from the ZIP engine. Older Windows never probes or builds it during automatic installation. Windows XP and PowerShell 2.0 are outside the compatibility target. The prerequisite availability is documented by [Microsoft's .NET Framework version table](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies) and [WMF compatibility table](https://learn.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf-overview).
 
 ## Install
 
@@ -28,7 +36,7 @@ Download this repository using **Code > Download ZIP**, extract it, and open Pow
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-CleanZip.ps1
 ```
 
-The installer builds the executable and installs it into `%LOCALAPPDATA%\CleanZip`. It backs up existing files and context-menu settings before updating them. Existing installed exclusion rules are preserved; use `-ResetRules` to replace them with the repository defaults.
+The installer builds an AnyCPU executable for x86/x64 and installs it into `%LOCALAPPDATA%\CleanZip`. It always registers the classic menu, then automatically adds the modern extension on compatible Windows 11 systems. Missing modern prerequisites do not block the classic installation. It backs up existing files and context-menu settings before updating them. Existing installed exclusion rules are preserved; use `-ResetRules` to replace them with the repository defaults.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-CleanZip.ps1 -ResetRules
@@ -40,17 +48,29 @@ To use a custom installation folder:
 .\Install-CleanZip.ps1 -InstallationDirectory 'D:\Tools\CleanZip'
 ```
 
+To install only the classic components, without probing or building the modern extension:
+
+```powershell
+.\Install-CleanZip.ps1 -ContextMenu Classic
+```
+
+To require modern integration and report missing prerequisites as an error:
+
+```powershell
+.\Install-CleanZip.ps1 -ContextMenu Modern
+```
+
 ## Use
 
 1. Right-click a software project folder or an empty area inside it.
-2. Select **Clean Zip**. The modern-menu installation below displays it directly on Windows 11; the basic installer uses **Show more options**.
+2. Select **Clean Zip**. Automatic modern installation displays it directly on Windows 11; a classic installation uses **Show more options** there. Earlier Windows versions display the classic entry directly.
 3. Find the ZIP next to the selected folder: `my-project` becomes `my-project.zip`.
 
 The console shows progress and closes when the process exits. A single folder is handled per invocation.
 
 ## Windows 11 modern context menu
 
-For x64 Windows 11, install the basic utility first, then run:
+Automatic installation enables this integration when its prerequisites are already present. To add it later to an existing x64 Windows 11 installation, run:
 
 ```powershell
 .\Install-ModernMenu.ps1
@@ -125,11 +145,14 @@ The `build` folder contains the executable, PowerShell wrapper, and rules file. 
 ```powershell
 .\Build-CleanZip.ps1
 .\tests\Test-CleanZip.ps1
+.\tests\Test-Compatibility.ps1
 .\Build-ModernMenu.ps1
 dotnet run --project .\tests\ShellTests\ShellTests.csproj -c Release
 ```
 
 Tests create temporary fixtures under `build`, verify exact ZIP contents and file data, and cover nested exclusions, uppercase extensions, minified suffixes, hidden files, Unicode, spaces, and special filename characters. GitHub Actions builds and tests on Windows and provides a portable build artifact.
+
+Compatibility tests cover old/new Windows build numbers, x86/x64/ARM64 menu selection, missing modern prerequisites, the absence of Appx cmdlets, PowerShell 3.0-compatible SHA256, and an AnyCPU executable. CI also runs the tests from 32-bit Windows PowerShell. These tests run on current Windows; full Explorer installation on Windows 7/8/8.1/10 has not been verified in separate VMs.
 
 The shell tests verify the title and actual Windows folder/file selections. After installing the modern menu, add `-- --installed` to the `dotnet run` command to also verify out-of-process COM activation and end-to-end invocation with ZIP-content checks.
 

@@ -5,7 +5,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $InstallationDirectory = [IO.Path]::GetFullPath($InstallationDirectory)
-if (-not [Environment]::Is64BitOperatingSystem -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { throw 'This shell extension currently supports x64 Windows 11.' }
+if (-not [Environment]::Is64BitOperatingSystem -or -not [Environment]::Is64BitProcess -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64') { throw 'This shell extension currently supports x64 Windows 11 using x64 PowerShell.' }
 if ([int](Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').CurrentBuildNumber -lt 22000) { throw 'The modern menu requires Windows 11.' }
 $developer = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction SilentlyContinue
 if ($developer.AllowDevelopmentWithoutDevLicense -ne 1) { throw 'This source-build registration requires Developer Mode. Enable it explicitly in Windows Settings, or use the legacy installer.' }

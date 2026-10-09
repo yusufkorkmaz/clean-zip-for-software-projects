@@ -1,6 +1,7 @@
 [CmdletBinding()]
-param([string]$OutputDirectory = (Join-Path $PSScriptRoot 'build'))
+param([string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
+if (-not $OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot 'build' }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 if (-not (Get-Command dotnet.exe -ErrorAction SilentlyContinue)) { throw 'Install the .NET 10 x64 SDK to build the modern menu.' }
 & dotnet.exe build (Join-Path $PSScriptRoot 'modern\CleanZip.Shell.csproj') -c Release -o (Join-Path $OutputDirectory 'modern') --ignore-failed-sources

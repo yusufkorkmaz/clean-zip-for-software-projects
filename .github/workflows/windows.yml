@@ -19,6 +19,17 @@ jobs:
       - name: Test archive contents and exclusions
         shell: powershell
         run: .\tests\Test-CleanZip.ps1
+      - name: Test legacy menu compatibility and missing Appx commands
+        shell: powershell
+        run: .\tests\Test-Compatibility.ps1
+      - name: Test 32-bit PowerShell and x86 ZIP engine
+        shell: powershell
+        run: |
+          & "$env:WINDIR\SysWOW64\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Compatibility.ps1
+          if ($LASTEXITCODE -ne 0) { throw '32-bit compatibility tests failed.' }
+          .\Build-CleanZip.ps1 -OutputDirectory .\build\x86 -Platform x86
+          & "$env:WINDIR\SysWOW64\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-CleanZip.ps1 -ScriptPath .\build\x86\CleanZip.ps1
+          if ($LASTEXITCODE -ne 0) { throw '32-bit archive tests failed.' }
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'

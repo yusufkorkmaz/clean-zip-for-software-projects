@@ -1,5 +1,6 @@
-param([string]$ScriptPath = (Join-Path $PSScriptRoot '..\build\CleanZip.ps1'))
+param([string]$ScriptPath)
 $ErrorActionPreference = 'Stop'
+if (-not $ScriptPath) { $ScriptPath = Join-Path $PSScriptRoot '..\build\CleanZip.ps1' }
 $ProgressPreference = 'SilentlyContinue'
 $fixture = Join-Path $PSScriptRoot ('..\build\tests-' + [Guid]::NewGuid().ToString('N') + '\sample project [2]')
 $include = @('package.json', 'package-lock.json', 'src\page.tsx', 'backend\App.cs', 'backend\App.csproj', '.env.example', 'src\binance\index.ts', 'src\object\index.ts', 'next.config.js', 'src\@test.ts', 'src\a ! b.ts', 'src\sayfa [1].tsx', ('src\T' + [char]0xFC + 'rk' + [char]0xE7 + 'e.ts'))

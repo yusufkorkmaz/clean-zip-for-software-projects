@@ -1,13 +1,19 @@
+#requires -Version 3.0
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [string]$InstallationDirectory = (Join-Path $env:LOCALAPPDATA 'CleanZip'),
-    [switch]$ResetRules
+    [switch]$ResetRules,
+    [ValidateSet('Auto','Classic','Modern')][string]$ContextMenu = 'Auto',
+    [switch]$RestoreWindows11Menu
 )
 
 $ErrorActionPreference = 'Stop'
 if ($env:OS -ne 'Windows_NT') { throw 'Clean Zip requires Windows.' }
 $InstallationDirectory = [IO.Path]::GetFullPath($InstallationDirectory)
 if (-not $PSCmdlet.ShouldProcess($InstallationDirectory, 'Install Clean Zip and register the current-user context menu')) { return }
+. (Join-Path $PSScriptRoot 'CleanZip.Installation.ps1')
+$menuPlan = Get-CleanZipContextMenuPlan -RequestedMenu $ContextMenu
+if ($RestoreWindows11Menu -and $menuPlan.Mode -ne 'Modern') { throw 'RestoreWindows11Menu requires the modern Windows 11 installation.' }
 & (Join-Path $PSScriptRoot 'Build-CleanZip.ps1')
 $buildDirectory = Join-Path $PSScriptRoot 'build'
 if ($InstallationDirectory.TrimEnd('\') -eq $buildDirectory.TrimEnd('\')) { throw 'Choose an installation folder outside the build directory.' }
@@ -37,7 +43,7 @@ foreach ($name in @('CleanZip.exe', 'CleanZip.ps1', 'CleanZip.rules.txt')) {
         try { Move-Item -LiteralPath $staged -Destination $destination }
         catch { Copy-Item -LiteralPath $previous -Destination $destination; throw }
     } else { Move-Item -LiteralPath $staged -Destination $destination -Force }
-    if ((Get-FileHash -LiteralPath (Join-Path $buildDirectory $name)).Hash -ne (Get-FileHash -LiteralPath $destination).Hash) { throw "Installed file mismatch: $name" }
+    if ((Get-CleanZipFileHash -Path (Join-Path $buildDirectory $name)) -ne (Get-CleanZipFileHash -Path $destination)) { throw "Installed file mismatch: $name" }
 }
 $engine = Join-Path $InstallationDirectory 'CleanZip.exe'
 foreach ($key in $keys) {
@@ -53,4 +59,15 @@ foreach ($key in $keys) {
 }
 Write-Output "Installed: $InstallationDirectory"
 Write-Output "Backups: $backupDirectory"
+if ($menuPlan.Mode -eq 'Modern') {
+    try {
+        & (Join-Path $PSScriptRoot 'Install-ModernMenu.ps1') -InstallationDirectory $InstallationDirectory -RestoreWindows11Menu:$RestoreWindows11Menu
+    } catch {
+        if ($ContextMenu -eq 'Modern') { throw }
+        Write-Warning ('Modern menu registration failed; the classic Clean Zip menu is installed. ' + $_.Exception.Message)
+        $menuPlan = [pscustomobject]@{ Mode='Classic'; Reason='Modern registration failed.' }
+    }
+}
+Write-Output ("Context menu: {0}. {1}" -f $menuPlan.Mode,$menuPlan.Reason)
+if ($menuPlan.Mode -eq 'Classic') { Write-Output 'On Windows 11, select Show more options to see the classic Clean Zip entry.' }
 Write-Output 'Right-click a folder or its background and select Clean Zip.'
