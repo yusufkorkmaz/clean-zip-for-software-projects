@@ -1,4 +1,4 @@
-#define AppVersion "2.0.0"
+#define AppVersion "2.0.1"
 [Setup]
 AppId={{9129BAAA-942C-43EE-BC17-C3593AC2A1BA}
 AppName=Clean Zip

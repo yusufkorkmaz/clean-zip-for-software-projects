@@ -8,7 +8,7 @@ Right-click a Windows project folder and choose **Clean Zip** to create a source
 
 [Portable x64 ZIP](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Portable-x64.zip) | [Release notes and SHA256 checksums](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest)
 
-This first release is **unsigned**; Windows may show an unknown-publisher/SmartScreen warning. On Windows 11 without Developer Mode, Clean Zip appears under **Show more options**. The download is a working per-user installer, not a source archive.
+This release is **unsigned**; Windows may show an unknown-publisher/SmartScreen warning. On Windows 11 without Developer Mode, Clean Zip appears under **Show more options**. The download is a working per-user installer, not a source archive.
 
 The installer runs for the current user without administrator permissions. No .NET runtime, Node.js, Visual C++ redistributable or 7-Zip installation is required. The native ZIP writer and C++ runtime are linked into the executable.
 
@@ -16,8 +16,10 @@ The installer runs for the current user without administrator permissions. No .N
 | --- | --- |
 | Windows 7, 8, 8.1, 10, x86/x64 | Classic **Clean Zip** entry |
 | Windows 11 x64, unsigned package | **Show more options**, plus the modern menu if Developer Mode is already enabled |
-| Windows 11 x64, trusted signed identity package | Modern **Clean Zip** entry plus the classic fallback |
+| Windows 11 x64, trusted signed identity package | Modern **Clean Zip** entry |
 | Windows on ARM | Classic entry through Windows' x86/x64 emulation; no native ARM64 shell extension |
+
+When modern registration succeeds, the static classic fallback is hidden so each menu contains one **Clean Zip** command. If modern registration is unavailable, the classic entry remains visible. Updates restore the appropriate visibility. The installer does not change Windows context-menu preferences.
 
 The installer never enables Developer Mode or imports a trust certificate. Windows 11's modern Explorer integration needs package identity: production registration requires a trusted signed MSIX identity package; the unsigned source-build path needs existing Developer Mode. See [Microsoft's package identity documentation](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/grant-identity-to-nonpackaged-apps).
 

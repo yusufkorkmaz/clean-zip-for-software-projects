@@ -2,7 +2,24 @@ param([string]$InstallationDirectory, [switch]$Remove)
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath($InstallationDirectory)
 $log = Join-Path $root 'menu-install.log'
+function Set-ClassicMenuVisibility([bool]$Visible) {
+    foreach ($relative in @('Directory\shell\CleanZip','Directory\Background\shell\CleanZip')) {
+        $key = 'HKCU:\Software\Classes\' + $relative
+        $commandKey = Join-Path $key 'command'
+        if (-not (Test-Path -LiteralPath $commandKey)) { continue }
+        $command = (Get-Item -LiteralPath $commandKey).GetValue('')
+        # Never modify a menu command belonging to another installation.
+        if (-not $command.StartsWith(('"' + $root.TrimEnd('\') + '\CleanZip.exe" '),[StringComparison]::OrdinalIgnoreCase)) { continue }
+        if ($Visible) {
+            Remove-ItemProperty -LiteralPath $key -Name LegacyDisable -ErrorAction SilentlyContinue
+        } else {
+            New-ItemProperty -LiteralPath $key -Name LegacyDisable -PropertyType String -Value '' -Force | Out-Null
+        }
+    }
+}
 try {
+    # Clear stale visibility from an earlier modern install before any fallback exit.
+    Set-ClassicMenuVisibility $true
     # No modern commands or dependency checks on older Windows.
     $build = [int](Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').CurrentBuildNumber
     if ($build -lt 22000) { exit 0 }
@@ -44,9 +61,13 @@ try {
     $package = Get-AppxPackage -Name CleanZip.SoftwareProjects | Sort-Object Version -Descending | Select-Object -First 1
     if (-not $package) { throw 'Modern package registration was not found.' }
     [IO.File]::WriteAllText((Join-Path $root 'modern-installed.txt'),$package.PackageFullName)
+    # Explorer also shows the packaged command in its classic menu. Hide the
+    # static fallback so Show more options does not contain a duplicate.
+    Set-ClassicMenuVisibility $false
     'Modern menu installed; native C++ extension needs no .NET runtime.' | Out-File $log
     exit 0
 } catch {
+    Set-ClassicMenuVisibility $true
     # ZIP/classic functionality remains available if Windows rejects the optional identity registration.
     ('Classic menu installed. Modern menu registration: ' + $_.Exception.Message) | Out-File $log
     exit 1

@@ -208,7 +208,7 @@ int wmain(int argc, wchar_t** argv) {
             std::wstring arg(argv[i]);
             if (arg == L"--no-ui") continue;
             else if (arg == L"--scan-only") scanOnly = true;
-            else if (arg == L"--version") { puts("Clean Zip 2.0.0 (native)"); return 0; }
+            else if (arg == L"--version") { puts("Clean Zip 2.0.1 (native)"); return 0; }
             else if ((arg == L"--path" || arg == L"--output" || arg == L"--manifest") && i + 1 < argc) {
                 auto value = std::wstring(argv[++i]);
                 if (arg == L"--path") source = value;
