@@ -1,39 +1,53 @@
 # Clean Zip for Software Projects
 
-Right-click a Windows project folder and choose **Clean Zip** to create a source ZIP next to it. Dependencies, build output, binary files, media, Office documents and minified JS/CSS are excluded before compression.
+Right-click a project folder and choose **Clean Zip** to create a source ZIP beside it, excluding dependencies, build output and common binary/media files.
 
-## Installation
+**[Download the Windows installer](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Setup.exe)** · **[Türkçe anlatım](README.tr.md)**
 
-**[Download CleanZip-Setup.exe for Windows](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Setup.exe)** (approximately 2.2 MB)
+[Portable x64 ZIP](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Portable-x64.zip) · [Release notes and checksums](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest)
 
-[Portable x64 ZIP](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Portable-x64.zip) | [Release notes and SHA256 checksums](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest)
+## Install and use
 
-This release is **unsigned**; Windows may show an unknown-publisher/SmartScreen warning. On Windows 11 without Developer Mode, Clean Zip appears under **Show more options**. The download is a working per-user installer, not a source archive.
+1. Download and run **CleanZip-Setup.exe** (about 2.2 MB).
+2. Right-click a project folder or an empty area inside it, then choose **Clean Zip**.
+3. Find `project.zip` beside `project`. The progress console closes automatically without a completion alert.
 
-The installer runs for the current user without administrator permissions. No .NET runtime, Node.js, Visual C++ redistributable or 7-Zip installation is required. The native ZIP writer and C++ runtime are linked into the executable.
+Installation is for your current Windows account. Administrator permission, .NET, Node.js, a Visual C++ redistributable and 7-Zip are not required. This release is **unsigned**, so Windows may show a SmartScreen warning.
 
-| Windows | Context menu |
+## Where is Clean Zip?
+
+| Computer | Menu in this unsigned release |
 | --- | --- |
-| Windows 7, 8, 8.1, 10, x86/x64 | Classic **Clean Zip** entry |
-| Windows 11 x64, unsigned package | **Show more options**, plus the modern menu if Developer Mode is already enabled |
-| Windows 11 x64, trusted signed identity package | Modern **Clean Zip** entry |
-| Windows on ARM | Classic entry through Windows' x86/x64 emulation; no native ARM64 shell extension |
+| Windows 7, 8, 8.1 or 10, x86/x64 | Classic right-click menu |
+| Windows 11 x64, Developer Mode off | **Show more options > Clean Zip** |
+| Windows 11 x64, Developer Mode already on | Modern menu if registration succeeds; otherwise **Show more options** |
+| Windows on ARM | Classic menu through x86/x64 emulation; no native ARM64 extension |
 
-When modern registration succeeds, the static classic fallback is hidden so each menu contains one **Clean Zip** command. If modern registration is unavailable, the classic entry remains visible. Updates restore the appropriate visibility. The installer does not change Windows context-menu preferences.
+**2.0.1 fixes duplicate entries:** when the modern command is available, setup hides the extra classic entry. Updates restore the classic entry when modern registration is unavailable.
 
-The installer never enables Developer Mode or imports a trust certificate. Windows 11's modern Explorer integration needs package identity: production registration requires a trusted signed MSIX identity package; the unsigned source-build path needs existing Developer Mode. See [Microsoft's package identity documentation](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/grant-identity-to-nonpackaged-apps).
+Setup does not change your Windows menu preference, enable Developer Mode, import certificates or alter SmartScreen. A trusted signed identity package is needed to register the modern menu without Developer Mode ([Microsoft documentation](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/grant-identity-to-nonpackaged-apps)); this release does not include one.
 
-The compatibility target is Windows 7 and later. Automated build, archive and installer tests run on current Windows; Explorer installation on every older Windows version has not been tested in separate VMs.
+Windows 7 and later are compatibility targets. Automated tests run on current Windows; installation on every older version and ARM has not been verified in separate VMs.
 
-### SmartScreen warning during installation
+## Common situations
 
-This release has no digital signature, so Windows may display **Windows protected your PC** and **Unknown publisher**. Download from the release link above and verify the file against `SHA256SUMS.txt` from the same release:
+| Situation | What to do |
+| --- | --- |
+| **Windows protected your PC / Unknown publisher** | Verify the release checksum, then choose **More info > Run anyway** if offered. Turkish: **Ek bilgi > Yine de çalıştır**. |
+| **Run anyway** is missing | A Windows policy can block continuing. See the policy steps below; on a managed computer, ask IT. |
+| Windows 11 still opens the classic menu | A previous Windows customization can force it. Setup preserves this preference. See the restore steps below. |
+| Two **Clean Zip** entries | Install **2.0.1 or later**, then restart File Explorer if the old menu is still cached. |
+| The console closes without an alert | Expected behavior. Check for the ZIP beside the source folder. |
+| No new ZIP appears | All files may be excluded, or the destination may be unwritable/in use. Run the command below in PowerShell to see the result or error. |
+
+Verify the installer against `SHA256SUMS.txt` from the same release:
 
 ```powershell
 Get-FileHash .\CleanZip-Setup.exe -Algorithm SHA256
 ```
 
-If you trust the verified download and Windows offers it, select **More info > Run anyway** (**Ek bilgi > Yine de çalıştır** in Turkish).
+<details>
+<summary>Run anyway is missing: Windows policy steps</summary>
 
 If **Run anyway** is missing, a SmartScreen policy can prevent users from continuing. An administrator can inspect the policy on editions with Local Group Policy Editor:
 
@@ -47,44 +61,78 @@ Turkish path: **Bilgisayar Yapılandırması > Yönetim Şablonları > Windows B
 
 Clean Zip does not change SmartScreen policies. A valid signing certificate can still require reputation before warnings disappear. See Microsoft's [SmartScreen policy documentation](https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-smartscreen#preventoverrideforfilesinshell) and [app reputation documentation](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation).
 
-## Use
+</details>
 
-1. Install Clean Zip.
-2. Right-click a project folder, or an empty area inside it, and choose **Clean Zip**.
-3. Find `project.zip` next to `project`.
+<details>
+<summary>Restore the Windows 11 modern menu after a previous registry tweak</summary>
 
-The console shows progress, then closes without a completion alert. Excluded folders are never entered, reparse points are skipped, and files are streamed into a ZIP64 archive using fast Deflate compression. ZIP filenames use UTF-8, including Turkish characters. An existing output is replaced only after the new archive is complete; a failed run leaves the old ZIP intact.
+Run this in PowerShell as the affected desktop user. It backs up and removes only the empty per-user override used to force the old menu, then restart File Explorer or sign out and back in. It does not remove Windows' system component.
 
-## Exclusion rules
+```powershell
+$key = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}'
+$server = Join-Path $key 'InProcServer32'
+if ((Test-Path -LiteralPath $server) -and
+    [string]::IsNullOrEmpty((Get-Item -LiteralPath $server).GetValue(''))) {
+    $backup = Join-Path ([Environment]::GetFolderPath('Desktop')) ('context-menu-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.reg')
+    & reg.exe export 'HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}' $backup /y
+    if ($LASTEXITCODE -eq 0) { Remove-Item -LiteralPath $key -Recurse -Force }
+}
+```
 
-Edit `%LOCALAPPDATA%\CleanZip\CleanZip.rules.txt`. Existing rules survive updates and uninstallation.
+If this override is absent, the script changes nothing; inspect the Windows customization tool that changed the menu.
+
+</details>
+
+## What is excluded?
+
+| Content | Examples |
+| --- | --- |
+| Dependencies, build output and caches | `node_modules`, `.next`, `bin`, `obj`, `dist`, `.git`, virtual environments |
+| Compiled files | `.dll`, `.exe`, `.pdb`, `.class`, `.pyc` |
+| Media, fonts and archives | Images, videos, audio, PDF, ZIP, fonts |
+| Office and design files | PowerPoint, Word, Excel, PSD, AI, XD, Sketch |
+| Installers, disk files, database data and model weights | MSI, ISO, DB, MDF, ONNX, PT |
+| Generated and temporary files | `.min.js`, `.min.css`, source maps, logs, dumps, temp files |
+
+Ordinary JS/CSS and other source code, manifests, lockfiles, SQL schemas and configuration are kept. **`.env` files are kept too**; review secrets before sharing. This is a source-review ZIP: excluded images and other assets may be needed to run the complete application.
+
+See [the full default exclusion list](CleanZip.rules.txt). Customize `%LOCALAPPDATA%\CleanZip\CleanZip.rules.txt`:
 
 ```text
 d:node_modules
-d:.next
-d:bin
-d:obj
-e:.dll
 e:.pdf
-e:.pptx
 s:.min.js
-s:.min.css
 f:Thumbs.db
 ```
 
-Rules match case-insensitively. `d:` skips an exact directory name at any depth; `e:` excludes a file extension; `s:` excludes a filename suffix; `f:` excludes an exact filename. Versioned `.so.*` files are also excluded. Ordinary source JS/CSS, project manifests, lockfiles, SQL schemas, configuration and hidden source files are kept. `.env` files are retained: review the selected source before sharing a ZIP if a project contains credentials.
+Rules ignore letter case: `d:` directory name at any depth, `e:` extension, `s:` filename suffix, `f:` exact filename. Excluded folders are skipped before scanning; links/reparse points are skipped.
+
+## Update, uninstall and ZIP behavior
+
+Run the latest installer to update. Uninstall from **Installed apps > Clean Zip** or the Start menu shortcut. Custom exclusion rules survive both updates and uninstallation.
+
+Source files are never modified. UTF-8 filenames and ZIP64 are supported. An existing ZIP is replaced only after the new ZIP is complete; a failed run preserves the previous ZIP. An empty selection creates no ZIP.
 
 ## Command line
 
 ```powershell
-CleanZip.exe --path "C:\Projects\My Project" --no-ui
+& "$env:LOCALAPPDATA\CleanZip\CleanZip.exe" --path "C:\Projects\My Project" --no-ui
+```
+
+<details>
+<summary>Preview selected files or choose another output</summary>
+
+```powershell
 CleanZip.exe --path "C:\Projects\My Project" --scan-only --manifest "C:\Temp\selected.txt"
 CleanZip.exe --path "C:\Projects\My Project" --output "C:\Archives\source.zip" --no-ui
 ```
 
-Output and manifest paths must be outside the source folder. An empty selection does not create a ZIP. Files and folders in the source are never modified.
+Use these commands from the executable's folder. Output and manifest paths must be outside the source folder.
 
-## Build and test
+</details>
+
+<details>
+<summary>Build and test for developers</summary>
 
 Build requirements: Visual Studio C++ tools, Windows SDK, CMake 3.24+, Git, and Inno Setup 6.3+ for the installer. These are developer tools; users only need the installer. CMake retrieves [miniz 3.1.0](https://github.com/richgel999/miniz/tree/174573d60290f447c13a2b1b3405de2b96e27d6c), pinned to its commit.
 
@@ -101,7 +149,7 @@ Copy-Item .\build\x64\_deps\miniz-src\LICENSE .\build\miniz-LICENSE.txt
 
 Tests verify exact archive entries and data, all exclusion categories, Unicode, spaces, brackets, hidden files, mixed-case extensions, native COM activation and folder/file command states. Native PE headers are checked for the absence of a CLR/.NET runtime header. Installer tests verify the menu commands, installed ZIP creation, rule preservation and uninstall cleanup.
 
-Uninstall from Windows **Installed apps > Clean Zip**, or the Start menu shortcut. User exclusion rules are retained.
+</details>
 
 ## License
 
