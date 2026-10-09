@@ -1,0 +1,29 @@
+name: Windows build and test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build
+        shell: powershell
+        run: .\Build-CleanZip.ps1
+      - name: Test archive contents and exclusions
+        shell: powershell
+        run: .\tests\Test-CleanZip.ps1
+      - name: Upload portable build
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: clean-zip-windows
+          path: |
+            build/CleanZip.exe
+            build/CleanZip.ps1
+            build/CleanZip.rules.txt
