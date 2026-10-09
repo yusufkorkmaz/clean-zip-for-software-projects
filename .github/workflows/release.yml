@@ -1,0 +1,33 @@
+name: Publish tested Windows installer
+on:
+  push:
+    branches: [main]
+    paths: [release.json]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: windows-2022
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download and publish the exact tested installer
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $release = Get-Content .\release.json -Raw | ConvertFrom-Json
+          if ($release.version -notmatch '^\d+\.\d+\.\d+$' -or $release.buildSha -notmatch '^[0-9a-f]{40}$' -or $release.installerSha256 -notmatch '^[0-9a-f]{64}$') { throw 'Invalid release metadata.' }
+          $run = & gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$($release.runId)" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $run.conclusion -ne 'success' -or $run.head_sha -ne $release.buildSha) { throw 'Release requires the specified successful native build.' }
+          & gh run download $release.runId --repo $env:GITHUB_REPOSITORY --name clean-zip-native-windows --dir release-artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot download tested build.' }
+          $installer = '.\release-artifacts\dist\CleanZip-Setup.exe'
+          if ((Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() -ne $release.installerSha256) { throw 'Installer does not match the approved tested artifact.' }
+          & gh release create "v$($release.version)" $installer '.\release-artifacts\dist\CleanZip-Portable-x64.zip' '.\release-artifacts\dist\SHA256SUMS.txt' --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Clean Zip $($release.version) - native Windows installer" --notes-file .\RELEASE-NOTES.md --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Release creation failed; existing releases are never overwritten.' }

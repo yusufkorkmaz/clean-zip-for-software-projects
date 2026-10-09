@@ -4,7 +4,11 @@ Right-click a Windows project folder and choose **Clean Zip** to create a source
 
 ## Installation
 
-The native C++ edition provides a single **CleanZip-Setup.exe** installer. CI builds it and verifies installation, updates and uninstallation; download the `clean-zip-native-windows` artifact from [GitHub Actions](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/actions). Public release downloads will appear here once the distribution's signing choice is finalized.
+**[Download CleanZip-Setup.exe for Windows](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Setup.exe)** (approximately 2.2 MB)
+
+[Portable x64 ZIP](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Portable-x64.zip) | [Release notes and SHA256 checksums](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest)
+
+This first release is **unsigned**; Windows may show an unknown-publisher/SmartScreen warning. On Windows 11 without Developer Mode, Clean Zip appears under **Show more options**. The download is a working per-user installer, not a source archive.
 
 The installer runs for the current user without administrator permissions. No .NET runtime, Node.js, Visual C++ redistributable or 7-Zip installation is required. The native ZIP writer and C++ runtime are linked into the executable.
 
