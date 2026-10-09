@@ -23,6 +23,28 @@ The installer never enables Developer Mode or imports a trust certificate. Windo
 
 The compatibility target is Windows 7 and later. Automated build, archive and installer tests run on current Windows; Explorer installation on every older Windows version has not been tested in separate VMs.
 
+### SmartScreen warning during installation
+
+This release has no digital signature, so Windows may display **Windows protected your PC** and **Unknown publisher**. Download from the release link above and verify the file against `SHA256SUMS.txt` from the same release:
+
+```powershell
+Get-FileHash .\CleanZip-Setup.exe -Algorithm SHA256
+```
+
+If you trust the verified download and Windows offers it, select **More info > Run anyway** (**Ek bilgi > Yine de çalıştır** in Turkish).
+
+If **Run anyway** is missing, a SmartScreen policy can prevent users from continuing. An administrator can inspect the policy on editions with Local Group Policy Editor:
+
+1. Press **Win + R**, enter `gpedit.msc`, and press Enter.
+2. Open **Computer Configuration > Administrative Templates > Windows Components > Windows Defender SmartScreen > Explorer**.
+3. Open **Configure Windows Defender SmartScreen**.
+
+On a personal computer you own and administer, **Enabled > Warn** allows the confirmation while keeping SmartScreen warnings enabled; **Warn and prevent bypass** removes that option. This changes override behavior for all downloaded applications. On a managed work/school computer, ask IT for an approved installation instead of changing the organization's policy.
+
+Turkish path: **Bilgisayar Yapılandırması > Yönetim Şablonları > Windows Bileşenleri > Windows Defender SmartScreen > Gezgin > Windows Defender SmartScreen'i yapılandır**; the choices are **Etkin > Uyar** and **Uyar ve geçişleri engelle**.
+
+Clean Zip does not change SmartScreen policies. A valid signing certificate can still require reputation before warnings disappear. See Microsoft's [SmartScreen policy documentation](https://learn.microsoft.com/en-us/windows/client-management/mdm/policy-csp-smartscreen#preventoverrideforfilesinshell) and [app reputation documentation](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation).
+
 ## Use
 
 1. Install Clean Zip.
