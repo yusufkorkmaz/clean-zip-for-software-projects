@@ -19,6 +19,16 @@ jobs:
       - name: Test archive contents and exclusions
         shell: powershell
         run: .\tests\Test-CleanZip.ps1
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+          architecture: x64
+      - name: Build modern Windows 11 menu
+        shell: powershell
+        run: .\Build-ModernMenu.ps1
+      - name: Test shell command and native selection
+        shell: powershell
+        run: dotnet run --project .\tests\ShellTests\ShellTests.csproj -c Release
       - name: Upload portable build
         uses: actions/upload-artifact@v7.0.2
         with:
@@ -27,3 +37,6 @@ jobs:
             build/CleanZip.exe
             build/CleanZip.ps1
             build/CleanZip.rules.txt
+            build/modern/*
+            build/Assets/*
+            build/AppxManifest.xml

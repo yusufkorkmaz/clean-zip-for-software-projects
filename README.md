@@ -5,6 +5,7 @@ Fast Windows right-click utility for zipping software projects with configurable
 ## Features
 
 - Adds **Clean Zip** to the context menu of a folder and its background.
+- Optional Windows 11 integration shows **Clean Zip** directly in the modern menu.
 - Skips excluded directories before scanning their contents.
 - Uses a compiled C# scanner and optional 7-Zip compression.
 - Falls back to .NET ZIP compression when 7-Zip is unavailable.
@@ -42,10 +43,30 @@ To use a custom installation folder:
 ## Use
 
 1. Right-click a software project folder or an empty area inside it.
-2. Select **Clean Zip**. On Windows 11, use **Show more options** if necessary.
+2. Select **Clean Zip**. The modern-menu installation below displays it directly on Windows 11; the basic installer uses **Show more options**.
 3. Find the ZIP next to the selected folder: `my-project` becomes `my-project.zip`.
 
 The console shows progress and closes when the process exits. A single folder is handled per invocation.
+
+## Windows 11 modern context menu
+
+For x64 Windows 11, install the basic utility first, then run:
+
+```powershell
+.\Install-ModernMenu.ps1
+```
+
+The modern extension requires the **.NET 10 x64 SDK** to build and the **.NET 10 x64 runtime** on the installed computer. This source-build installer registers an unpackaged application identity using `Add-AppxPackage -Register -ExternalLocation`, which requires **Developer Mode** already enabled. The installer does not enable Developer Mode or install certificates. The normal installer remains available without these additional requirements.
+
+If an old registry tweak forces the classic context menu, explicitly restore the native Windows 11 menu while installing:
+
+```powershell
+.\Install-ModernMenu.ps1 -RestoreWindows11Menu
+```
+
+Pass the same `-InstallationDirectory` to both installers when using a custom folder. Restart File Explorer after installation to reload the command. Existing exclusion rules are reused. The optional restore switch backs up and removes only the per-user `{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}` classic-menu override.
+
+The extension uses `IExplorerCommand` with packaged COM activation in a Windows surrogate process. It only inspects the selected folder or current folder view when opening the menu; scanning and compression begin after selection. Each update uses a separate extension directory so a loaded DLL can finish safely. Old extension directories and backups remain until removed manually. Distribution without Developer Mode requires a signed package; this repository currently supplies a development registration, not a signed MSIX release. See [Microsoft's Explorer integration documentation](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/integrate-packaged-app-with-file-explorer).
 
 These archives are intended for source-code inspection. The default exclusions omit dependencies, binary assets, and data that can be required to run an application. Source and configuration files, including environment files, are included unless an exclusion rule matches them.
 
@@ -104,9 +125,13 @@ The `build` folder contains the executable, PowerShell wrapper, and rules file. 
 ```powershell
 .\Build-CleanZip.ps1
 .\tests\Test-CleanZip.ps1
+.\Build-ModernMenu.ps1
+dotnet run --project .\tests\ShellTests\ShellTests.csproj -c Release
 ```
 
 Tests create temporary fixtures under `build`, verify exact ZIP contents and file data, and cover nested exclusions, uppercase extensions, minified suffixes, hidden files, Unicode, spaces, and special filename characters. GitHub Actions builds and tests on Windows and provides a portable build artifact.
+
+The shell tests verify the title and actual Windows folder/file selections. After installing the modern menu, add `-- --installed` to the `dotnet run` command to also verify out-of-process COM activation and end-to-end invocation with ZIP-content checks.
 
 ## Uninstall
 
