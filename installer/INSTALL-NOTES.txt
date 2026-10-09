@@ -1,0 +1,10 @@
+Clean Zip creates a ZIP next to a project folder using the Clean Zip right-click command.
+It skips dependencies, build output, media, documents, binary files and minified JavaScript/CSS.
+No .NET runtime, Node.js or 7-Zip installation is required.
+
+This first release is unsigned. Windows may show an unknown-publisher/SmartScreen warning.
+Windows 7/8/8.1/10: classic right-click menu.
+Windows 11: classic menu under Show more options; the modern menu is also installed on x64 systems that already have Developer Mode enabled.
+Clean Zip does not enable Developer Mode or import trust certificates.
+
+Existing exclusion rules are preserved on updates and uninstallation.

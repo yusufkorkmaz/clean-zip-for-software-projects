@@ -1,0 +1,4 @@
+LIBRARY "CleanZip.Shell"
+EXPORTS
+  DllGetClassObject PRIVATE
+  DllCanUnloadNow PRIVATE

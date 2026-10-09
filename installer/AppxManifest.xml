@@ -7,7 +7,7 @@
  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
  IgnorableNamespaces="uap uap10 com desktop4 desktop5 rescap">
- <Identity Name="CleanZip.SoftwareProjects" Publisher="CN=CleanZip" Version="1.0.0.0" ProcessorArchitecture="x64" />
+ <Identity Name="CleanZip.SoftwareProjects" Publisher="CN=CleanZip" Version="2.0.0.0" ProcessorArchitecture="x64" />
  <Properties>
   <DisplayName>Clean Zip</DisplayName><PublisherDisplayName>Clean Zip</PublisherDisplayName>
   <Logo>Assets\Logo.png</Logo><uap10:AllowExternalContent>true</uap10:AllowExternalContent>
@@ -19,7 +19,7 @@
    <uap:VisualElements DisplayName="Clean Zip" Description="Zip software project source files" BackgroundColor="transparent" Square150x150Logo="Assets\Logo.png" Square44x44Logo="Assets\SmallLogo.png" AppListEntry="none" />
    <Extensions>
     <com:Extension Category="windows.comServer"><com:ComServer><com:SurrogateServer DisplayName="Clean Zip">
-     <com:Class Id="AD9A2D5B-BB56-48A1-8443-A39F9C8465DF" Path="modern\CleanZip.Shell.comhost.dll" ThreadingModel="STA" />
+     <com:Class Id="AD9A2D5B-BB56-48A1-8443-A39F9C8465DF" Path="modern-2.0.0\CleanZip.Shell.dll" ThreadingModel="STA" />
     </com:SurrogateServer></com:ComServer></com:Extension>
     <desktop4:Extension Category="windows.fileExplorerContextMenus"><desktop4:FileExplorerContextMenus>
      <desktop5:ItemType Type="Directory"><desktop5:Verb Id="CleanZipFolder" Clsid="AD9A2D5B-BB56-48A1-8443-A39F9C8465DF" /></desktop5:ItemType>

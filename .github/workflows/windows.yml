@@ -1,53 +1,55 @@
-name: Windows build and test
-
+name: Native Windows build and installer
 on:
   push:
   pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  test:
-    runs-on: windows-latest
+  build:
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v7.0.1
-      - name: Build
-        shell: powershell
-        run: .\Build-CleanZip.ps1
-      - name: Test archive contents and exclusions
-        shell: powershell
-        run: .\tests\Test-CleanZip.ps1
-      - name: Test legacy menu compatibility and missing Appx commands
-        shell: powershell
-        run: .\tests\Test-Compatibility.ps1
-      - name: Test 32-bit PowerShell and x86 ZIP engine
+        with:
+          persist-credentials: false
+      - name: Build x64 and x86 native applications
         shell: powershell
         run: |
-          & "$env:WINDIR\SysWOW64\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Compatibility.ps1
-          if ($LASTEXITCODE -ne 0) { throw '32-bit compatibility tests failed.' }
-          .\Build-CleanZip.ps1 -OutputDirectory .\build\x86 -Platform x86
-          & "$env:WINDIR\SysWOW64\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-CleanZip.ps1 -ScriptPath .\build\x86\CleanZip.ps1
-          if ($LASTEXITCODE -ne 0) { throw '32-bit archive tests failed.' }
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: '10.0.x'
-          architecture: x64
-      - name: Build modern Windows 11 menu
+          .\Build-CleanZip.ps1 -Platform x64
+          .\Build-CleanZip.ps1 -Platform x86
+      - name: Test both architectures
         shell: powershell
-        run: .\Build-ModernMenu.ps1
-      - name: Test shell command and native selection
+        run: |
+          .\tests\Test-Native.ps1 -Platform x64
+          & "$env:WINDIR\SysWOW64\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-Native.ps1 -Platform x86
+          if ($LASTEXITCODE -ne 0) { throw 'x86 native tests failed.' }
+      - name: Prepare package assets
         shell: powershell
-        run: dotnet run --project .\tests\ShellTests\ShellTests.csproj -c Release
-      - name: Upload portable build
-        uses: actions/upload-artifact@v7.0.2
+        run: |
+          .\Build-Assets.ps1
+          Copy-Item .\installer\AppxManifest.xml .\build\AppxManifest.xml
+          Copy-Item .\build\x64\_deps\miniz-src\LICENSE .\build\miniz-LICENSE.txt
+      - name: Compile downloadable installer
+        shell: powershell
+        run: |
+          & 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' .\installer\CleanZip.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
+      - name: Test install, source ZIP and uninstall
+        shell: powershell
+        run: .\tests\Test-Installer.ps1
+      - name: Prepare portable archive and checksums
+        shell: powershell
+        run: |
+          $portable = '.\build\portable'
+          New-Item -ItemType Directory -Path $portable -Force | Out-Null
+          Copy-Item .\build\x64\Release\CleanZip.exe,$PWD\CleanZip.rules.txt,$PWD\LICENSE,$PWD\build\miniz-LICENSE.txt -Destination $portable
+          Compress-Archive -Path "$portable\*" -DestinationPath .\dist\CleanZip-Portable-x64.zip
+          Get-ChildItem .\dist -File | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(),$_.Name } | Set-Content .\dist\SHA256SUMS.txt
+      - uses: actions/upload-artifact@v7.0.2
         with:
-          name: clean-zip-windows
+          name: clean-zip-native-windows
           path: |
-            build/CleanZip.exe
-            build/CleanZip.ps1
-            build/CleanZip.rules.txt
-            build/modern/*
-            build/Assets/*
-            build/AppxManifest.xml
+            dist/*
+            build/x64/Release/*
+            build/x86/Release/*
+          if-no-files-found: error

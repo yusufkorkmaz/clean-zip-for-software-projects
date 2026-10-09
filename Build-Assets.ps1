@@ -1,12 +1,6 @@
-[CmdletBinding()]
 param([string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 if (-not $OutputDirectory) { $OutputDirectory = Join-Path $PSScriptRoot 'build' }
-$OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
-if (-not (Get-Command dotnet.exe -ErrorAction SilentlyContinue)) { throw 'Install the .NET 10 x64 SDK to build the modern menu.' }
-& dotnet.exe build (Join-Path $PSScriptRoot 'modern\CleanZip.Shell.csproj') -c Release -o (Join-Path $OutputDirectory 'modern') --ignore-failed-sources
-if ($LASTEXITCODE -ne 0) { throw 'Modern shell extension compilation failed.' }
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'modern\AppxManifest.xml') -Destination (Join-Path $OutputDirectory 'AppxManifest.xml') -Force
 Add-Type -AssemblyName System.Drawing
 $assets = Join-Path $OutputDirectory 'Assets'
 New-Item -ItemType Directory -Path $assets -Force | Out-Null

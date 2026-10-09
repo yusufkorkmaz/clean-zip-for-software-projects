@@ -1,165 +1,80 @@
 # Clean Zip for Software Projects
 
-Fast Windows right-click utility for zipping software projects with configurable exclusions for dependencies, build artifacts, media, documents, and minified JS/CSS files.
+Right-click a Windows project folder and choose **Clean Zip** to create a source ZIP next to it. Dependencies, build output, binary files, media, Office documents and minified JS/CSS are excluded before compression.
 
-## Features
+## Installation
 
-- Adds **Clean Zip** to the context menu of a folder and its background.
-- Automatically selects the classic menu on older Windows, or the modern menu on Windows 11 when its prerequisites are present.
-- Skips excluded directories before scanning their contents.
-- Uses a compiled C# scanner and optional 7-Zip compression.
-- Falls back to .NET ZIP compression when 7-Zip is unavailable.
-- Keeps relative paths and Unicode filenames.
-- Replaces an existing ZIP only after the new archive finishes successfully.
-- Closes the command window automatically, without a completion alert.
-- Installs for the current user; administrator rights are not required.
+The native C++ edition provides a single **CleanZip-Setup.exe** installer. CI builds it and verifies installation, updates and uninstallation; download the `clean-zip-native-windows` artifact from [GitHub Actions](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/actions). Public release downloads will appear here once the distribution's signing choice is finalized.
 
-## Requirements
+The installer runs for the current user without administrator permissions. No .NET runtime, Node.js, Visual C++ redistributable or 7-Zip installation is required. The native ZIP writer and C++ runtime are linked into the executable.
 
-- Windows 7 SP1 or later with **.NET Framework 4.5 or later**, including its C# compiler and ZIP assemblies.
-- **PowerShell 3.0 or later** for build and installation. Windows 7 SP1 needs Windows Management Framework 3.0 or later; its default PowerShell 2.0 is insufficient.
-- Optional: 7-Zip installed in the standard `Program Files\7-Zip` directory.
+| Windows | Context menu |
+| --- | --- |
+| Windows 7, 8, 8.1, 10, x86/x64 | Classic **Clean Zip** entry |
+| Windows 11 x64, unsigned package | **Show more options**, plus the modern menu if Developer Mode is already enabled |
+| Windows 11 x64, trusted signed identity package | Modern **Clean Zip** entry plus the classic fallback |
+| Windows on ARM | Classic entry through Windows' x86/x64 emulation; no native ARM64 shell extension |
 
-| Windows version | Menu selected by the default installer | Additional modern-menu requirements |
-| --- | --- | --- |
-| Windows 7 SP1, 8, 8.1, 10 (x86/x64) | Classic **Clean Zip** entry | None; uses .NET Framework |
-| Windows 11 x64, prerequisites present | Modern **Clean Zip** entry plus legacy fallback | .NET 10 x64 SDK/runtime and Developer Mode |
-| Windows 11, prerequisites missing, x86 installer process or ARM64 | Classic entry under **Show more options** | None for the classic entry |
+The installer never enables Developer Mode or imports a trust certificate. Windows 11's modern Explorer integration needs package identity: production registration requires a trusted signed MSIX identity package; the unsigned source-build path needs existing Developer Mode. See [Microsoft's package identity documentation](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/grant-identity-to-nonpackaged-apps).
 
-The modern extension is isolated from the ZIP engine. Older Windows never probes or builds it during automatic installation. Windows XP and PowerShell 2.0 are outside the compatibility target. The prerequisite availability is documented by [Microsoft's .NET Framework version table](https://learn.microsoft.com/en-us/dotnet/framework/install/versions-and-dependencies) and [WMF compatibility table](https://learn.microsoft.com/en-us/powershell/scripting/windows-powershell/wmf-overview).
-
-## Install
-
-Download this repository using **Code > Download ZIP**, extract it, and open PowerShell in the extracted folder:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-CleanZip.ps1
-```
-
-The installer builds an AnyCPU executable for x86/x64 and installs it into `%LOCALAPPDATA%\CleanZip`. It always registers the classic menu, then automatically adds the modern extension on compatible Windows 11 systems. Missing modern prerequisites do not block the classic installation. It backs up existing files and context-menu settings before updating them. Existing installed exclusion rules are preserved; use `-ResetRules` to replace them with the repository defaults.
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-CleanZip.ps1 -ResetRules
-```
-
-To use a custom installation folder:
-
-```powershell
-.\Install-CleanZip.ps1 -InstallationDirectory 'D:\Tools\CleanZip'
-```
-
-To install only the classic components, without probing or building the modern extension:
-
-```powershell
-.\Install-CleanZip.ps1 -ContextMenu Classic
-```
-
-To require modern integration and report missing prerequisites as an error:
-
-```powershell
-.\Install-CleanZip.ps1 -ContextMenu Modern
-```
+The compatibility target is Windows 7 and later. Automated build, archive and installer tests run on current Windows; Explorer installation on every older Windows version has not been tested in separate VMs.
 
 ## Use
 
-1. Right-click a software project folder or an empty area inside it.
-2. Select **Clean Zip**. Automatic modern installation displays it directly on Windows 11; a classic installation uses **Show more options** there. Earlier Windows versions display the classic entry directly.
-3. Find the ZIP next to the selected folder: `my-project` becomes `my-project.zip`.
+1. Install Clean Zip.
+2. Right-click a project folder, or an empty area inside it, and choose **Clean Zip**.
+3. Find `project.zip` next to `project`.
 
-The console shows progress and closes when the process exits. A single folder is handled per invocation.
-
-## Windows 11 modern context menu
-
-Automatic installation enables this integration when its prerequisites are already present. To add it later to an existing x64 Windows 11 installation, run:
-
-```powershell
-.\Install-ModernMenu.ps1
-```
-
-The modern extension requires the **.NET 10 x64 SDK** to build and the **.NET 10 x64 runtime** on the installed computer. This source-build installer registers an unpackaged application identity using `Add-AppxPackage -Register -ExternalLocation`, which requires **Developer Mode** already enabled. The installer does not enable Developer Mode or install certificates. The normal installer remains available without these additional requirements.
-
-If an old registry tweak forces the classic context menu, explicitly restore the native Windows 11 menu while installing:
-
-```powershell
-.\Install-ModernMenu.ps1 -RestoreWindows11Menu
-```
-
-Pass the same `-InstallationDirectory` to both installers when using a custom folder. Restart File Explorer after installation to reload the command. Existing exclusion rules are reused. The optional restore switch backs up and removes only the per-user `{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}` classic-menu override.
-
-The extension uses `IExplorerCommand` with packaged COM activation in a Windows surrogate process. It only inspects the selected folder or current folder view when opening the menu; scanning and compression begin after selection. Each update uses a separate extension directory so a loaded DLL can finish safely. Old extension directories and backups remain until removed manually. Distribution without Developer Mode requires a signed package; this repository currently supplies a development registration, not a signed MSIX release. See [Microsoft's Explorer integration documentation](https://learn.microsoft.com/en-us/windows/apps/desktop/modernize/integrate-packaged-app-with-file-explorer).
-
-These archives are intended for source-code inspection. The default exclusions omit dependencies, binary assets, and data that can be required to run an application. Source and configuration files, including environment files, are included unless an exclusion rule matches them.
+The console shows progress, then closes without a completion alert. Excluded folders are never entered, reparse points are skipped, and files are streamed into a ZIP64 archive using fast Deflate compression. ZIP filenames use UTF-8, including Turkish characters. An existing output is replaced only after the new archive is complete; a failed run leaves the old ZIP intact.
 
 ## Exclusion rules
 
-Edit `%LOCALAPPDATA%\CleanZip\CleanZip.rules.txt` after installation. Rules are case-insensitive and apply at every directory depth:
+Edit `%LOCALAPPDATA%\CleanZip\CleanZip.rules.txt`. Existing rules survive updates and uninstallation.
 
-| Prefix | Matches | Example |
-| --- | --- | --- |
-| `d:` | Exact directory name; skips the entire directory | `d:node_modules` |
-| `e:` | File extension | `e:.pptx` |
-| `f:` | Exact filename | `f:.env.local` |
-| `s:` | Filename suffix | `s:.min.js` |
-
-Lines starting with `#` are comments. Filename suffixes are literal, so use `s:.min.js`, rather than a wildcard. Normal `.js` and `.css` files remain included.
-
-Defaults cover:
-
-- `node_modules`, `.next`, `bin`, `obj`, `.git`, build output, caches, and virtual environments.
-- Compiled binaries, debug symbols, logs, and temporary files.
-- Images, videos, audio, PDFs, fonts, and existing archives.
-- Office documents, design files, installers, disk images, databases, and model weights.
-- `*.min.js` and `*.min.css`.
-
-See [CleanZip.rules.txt](CleanZip.rules.txt) for the complete list. Reparse points, including symbolic links and directory junctions, are skipped. Filtering uses file names and extensions; it does not inspect the contents of binary files with custom extensions.
-
-## Build and command line
-
-```powershell
-.\Build-CleanZip.ps1
-.\build\CleanZip.exe --path 'D:\Projects\my-project' --no-ui
+```text
+d:node_modules
+d:.next
+d:bin
+d:obj
+e:.dll
+e:.pdf
+e:.pptx
+s:.min.js
+s:.min.css
+f:Thumbs.db
 ```
 
-Preview the selected files without creating a ZIP:
+Rules match case-insensitively. `d:` skips an exact directory name at any depth; `e:` excludes a file extension; `s:` excludes a filename suffix; `f:` excludes an exact filename. Versioned `.so.*` files are also excluded. Ordinary source JS/CSS, project manifests, lockfiles, SQL schemas, configuration and hidden source files are kept. `.env` files are retained: review the selected source before sharing a ZIP if a project contains credentials.
+
+## Command line
 
 ```powershell
-.\build\CleanZip.exe --path 'D:\Projects\my-project' --scan-only
+CleanZip.exe --path "C:\Projects\My Project" --no-ui
+CleanZip.exe --path "C:\Projects\My Project" --scan-only --manifest "C:\Temp\selected.txt"
+CleanZip.exe --path "C:\Projects\My Project" --output "C:\Archives\source.zip" --no-ui
 ```
 
-Export the selected relative paths:
+Output and manifest paths must be outside the source folder. An empty selection does not create a ZIP. Files and folders in the source are never modified.
+
+## Build and test
+
+Build requirements: Visual Studio C++ tools, Windows SDK, CMake 3.24+, Git, and Inno Setup 6.3+ for the installer. These are developer tools; users only need the installer. CMake retrieves [miniz 3.1.0](https://github.com/richgel999/miniz/tree/174573d60290f447c13a2b1b3405de2b96e27d6c), pinned to its commit.
 
 ```powershell
-.\build\CleanZip.exe --path 'D:\Projects\my-project' --scan-only --manifest '.\selected-files.txt'
+.\Build-CleanZip.ps1 -Platform x64
+.\Build-CleanZip.ps1 -Platform x86
+.\tests\Test-Native.ps1 -Platform x64
+.\tests\Test-Native.ps1 -Platform x86
+.\Build-Assets.ps1
+Copy-Item .\installer\AppxManifest.xml .\build\AppxManifest.xml
+Copy-Item .\build\x64\_deps\miniz-src\LICENSE .\build\miniz-LICENSE.txt
+& 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe' .\installer\CleanZip.iss
 ```
 
-Choose an output location outside the source folder:
+Tests verify exact archive entries and data, all exclusion categories, Unicode, spaces, brackets, hidden files, mixed-case extensions, native COM activation and folder/file command states. Native PE headers are checked for the absence of a CLR/.NET runtime header. Installer tests verify the menu commands, installed ZIP creation, rule preservation and uninstall cleanup.
 
-```powershell
-.\build\CleanZip.exe --path 'D:\Projects\my-project' --no-ui --output 'D:\Archives\review.zip'
-```
+Uninstall from Windows **Installed apps > Clean Zip**, or the Start menu shortcut. User exclusion rules are retained.
 
-The `build` folder contains the executable, PowerShell wrapper, and rules file. Keep these three files together when using a portable build.
+## License
 
-## Test
-
-```powershell
-.\Build-CleanZip.ps1
-.\tests\Test-CleanZip.ps1
-.\tests\Test-Compatibility.ps1
-.\Build-ModernMenu.ps1
-dotnet run --project .\tests\ShellTests\ShellTests.csproj -c Release
-```
-
-Tests create temporary fixtures under `build`, verify exact ZIP contents and file data, and cover nested exclusions, uppercase extensions, minified suffixes, hidden files, Unicode, spaces, and special filename characters. GitHub Actions builds and tests on Windows and provides a portable build artifact.
-
-Compatibility tests cover old/new Windows build numbers, x86/x64/ARM64 menu selection, missing modern prerequisites, the absence of Appx cmdlets, PowerShell 3.0-compatible SHA256, and an AnyCPU executable. CI also runs the tests from 32-bit Windows PowerShell. These tests run on current Windows; full Explorer installation on Windows 7/8/8.1/10 has not been verified in separate VMs.
-
-The shell tests verify the title and actual Windows folder/file selections. After installing the modern menu, add `-- --installed` to the `dotnet run` command to also verify out-of-process COM activation and end-to-end invocation with ZIP-content checks.
-
-## Uninstall
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Uninstall-CleanZip.ps1
-```
-
-For a custom installation folder, pass the same `-InstallationDirectory` used at installation. The uninstaller removes the context-menu entries belonging to that installation. Remove the installation folder manually to also remove its files and backups.
+MIT. The installer includes miniz's MIT license.
