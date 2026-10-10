@@ -14,18 +14,9 @@ The progress window closes when finished. Installation is for your current accou
 
 [Portable x64 ZIP](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Portable-x64.zip) · [Releases and checksums](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest)
 
-## What goes in the ZIP?
+## Install and use with PowerShell
 
-Source code, regular JS/CSS, project definitions, lockfiles, SQL schemas and configuration are kept. Dependencies, build output, caches, compiled files, media, fonts, archives, Office/design files, installers, disk/database files, model weights and generated/temporary files are excluded. [Full rules](../CleanZip.rules.txt).
-
-**`.env` files are included. Check for secrets before sharing.** The ZIP is for code review; excluded assets may be needed to run the project. Links are skipped. Source files stay unchanged; a completed ZIP replaces the old ZIP. Empty selections create no ZIP. UTF-8 filenames and ZIP64 are supported.
-
-## Update or remove
-
-Run the latest installer to update. Remove through **Installed apps → Clean Zip** or the Start menu shortcut. Custom rules survive updates and removal.
-
-<details>
-<summary>Install or update with PowerShell</summary>
+### Install or update
 
 Open **PowerShell 5.1 or 7 without administrator privileges** and paste the whole block. It downloads the latest Windows installer, verifies SHA-256 and installs or updates silently for your account.
 
@@ -49,7 +40,40 @@ Open **PowerShell 5.1 or 7 without administrator privileges** and paste the whol
 }
 ```
 
-</details>
+### Create a ZIP and other commands
+
+Replace `$cleanZipProject` with your project folder. These commands use the installed executable's full path and can be run from any folder.
+
+```powershell
+$cleanZipEngine = "$env:LOCALAPPDATA\CleanZip\CleanZip.exe"
+$cleanZipProject = 'C:\Projects\My Project'
+$cleanZipArchives = "$env:USERPROFILE\CleanZip-Archives"
+New-Item -ItemType Directory -Path $cleanZipArchives -Force | Out-Null
+
+# Show the installed version.
+& $cleanZipEngine --version
+
+# Create a ZIP beside the project folder; errors stay visible.
+& $cleanZipEngine --path $cleanZipProject --no-ui
+
+# Preview the selected files without creating a ZIP.
+& $cleanZipEngine --path $cleanZipProject --scan-only --manifest "$cleanZipArchives\selected.txt"
+
+# Write the ZIP to another folder.
+& $cleanZipEngine --path $cleanZipProject --output "$cleanZipArchives\project.zip" --no-ui
+```
+
+ZIP and manifest must be outside the project and use different targets. The command above creates the destination folder.
+
+## What goes in the ZIP?
+
+Source code, regular JS/CSS, project definitions, lockfiles, SQL schemas and configuration are kept. Dependencies, build output, caches, compiled files, media, fonts, archives, Office/design files, installers, disk/database files, model weights and generated/temporary files are excluded. [Full rules](../CleanZip.rules.txt).
+
+**`.env` files are included. Check for secrets before sharing.** The ZIP is for code review; excluded assets may be needed to run the project. Links are skipped. Source files stay unchanged; a completed ZIP replaces the old ZIP. Empty selections create no ZIP. UTF-8 filenames and ZIP64 are supported.
+
+## Update or remove
+
+Run the latest installer to update. Remove through **Installed apps → Clean Zip** or the Start menu shortcut. Custom rules survive updates and removal.
 
 <details>
 <summary>Menu placement and compatibility</summary>
@@ -89,7 +113,7 @@ Get-FileHash .\CleanZip-Setup.exe -Algorithm SHA256
 </details>
 
 <details>
-<summary>Custom rules and command line</summary>
+<summary>Custom exclusion rules</summary>
 
 Edit `%LOCALAPPDATA%\CleanZip\CleanZip.rules.txt`:
 
@@ -101,15 +125,6 @@ f:Thumbs.db
 ```
 
 Rules ignore case: `d:` folder name at any depth, `e:` extension, `s:` filename suffix, `f:` exact filename. Excluded folders are not scanned.
-
-Run these from the executable's folder:
-
-```powershell
-CleanZip.exe --path "C:\Projects\My Project" --scan-only --manifest "C:\Temp\selected.txt"
-CleanZip.exe --path "C:\Projects\My Project" --output "C:\Archives\source.zip" --no-ui
-```
-
-Output and manifest must be outside the source folder. Use different ZIP and manifest targets.
 
 </details>
 

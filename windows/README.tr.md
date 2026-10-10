@@ -14,18 +14,9 @@ Proje klasörüne sağ tıkla; kaynak kod ZIP'i klasörün yanında oluşsun.
 
 [Taşınabilir x64 ZIP](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest/download/CleanZip-Portable-x64.zip) · [Sürümler ve sağlama değerleri](https://github.com/yusufkorkmaz/clean-zip-for-software-projects/releases/latest)
 
-## ZIP'e neler alınır?
+## PowerShell ile kurulum ve kullanım
 
-Kaynak kod, normal JS/CSS, proje tanımları, kilit dosyaları, SQL şemaları ve yapılandırmalar korunur. Bağımlılıklar, derleme çıktıları, önbellekler, derlenmiş dosyalar, medya, fontlar, arşivler, Office/tasarım dosyaları, kurulum/disk/veritabanı dosyaları, model ağırlıkları ve üretilmiş/geçici dosyalar dışlanır. [Tüm kurallar](../CleanZip.rules.txt).
-
-**`.env` dosyaları dahil edilir; paylaşmadan önce gizli bilgileri kontrol et.** ZIP kod inceleme içindir; projeyi çalıştırmak için dışlanan dosyalar gerekebilir. Bağlantılar atlanır. Kaynak dosyalar değişmez; eski ZIP yeni arşiv tamamlanınca değiştirilir. Seçim boşsa ZIP oluşturulmaz. UTF-8 dosya adları ve ZIP64 desteklenir.
-
-## Güncelleme ve kaldırma
-
-Güncellemek için son kurulum dosyasını çalıştır. Kaldırmak için **Yüklü uygulamalar → Clean Zip** veya Başlat menüsündeki kaldırma kısayolunu kullan. Özel kurallar güncellemede ve kaldırmada korunur.
-
-<details>
-<summary>PowerShell ile kurulum veya güncelleme</summary>
+### Kurulum veya güncelleme
 
 **PowerShell 5.1 veya 7'yi yönetici olmadan** aç ve bloğun tamamını yapıştır. Son Windows kurulum dosyasını indirir, SHA-256 değerini kontrol eder ve kullanıcı hesabına sessizce kurar veya günceller.
 
@@ -49,7 +40,40 @@ Güncellemek için son kurulum dosyasını çalıştır. Kaldırmak için **Yük
 }
 ```
 
-</details>
+### ZIP oluşturma ve diğer komutlar
+
+`$cleanZipProject` değerini kendi proje klasörünle değiştir. Komutlar kurulu uygulamayı tam yoluyla çağırır; herhangi bir klasörden çalıştırabilirsin.
+
+```powershell
+$cleanZipEngine = "$env:LOCALAPPDATA\CleanZip\CleanZip.exe"
+$cleanZipProject = 'C:\Projeler\Projem'
+$cleanZipArchives = "$env:USERPROFILE\CleanZip-Archives"
+New-Item -ItemType Directory -Path $cleanZipArchives -Force | Out-Null
+
+# Kurulu sürümü göster.
+& $cleanZipEngine --version
+
+# Proje klasörünün yanında ZIP oluştur; hata mesajları açık kalır.
+& $cleanZipEngine --path $cleanZipProject --no-ui
+
+# ZIP oluşturmadan seçilen dosyaları listele.
+& $cleanZipEngine --path $cleanZipProject --scan-only --manifest "$cleanZipArchives\selected.txt"
+
+# ZIP'i başka bir klasöre yaz.
+& $cleanZipEngine --path $cleanZipProject --output "$cleanZipArchives\project.zip" --no-ui
+```
+
+ZIP ve dosya listesi proje dışında ve farklı hedeflerde olmalı. Hedef klasör yukarıdaki komutla oluşturulur.
+
+## ZIP'e neler alınır?
+
+Kaynak kod, normal JS/CSS, proje tanımları, kilit dosyaları, SQL şemaları ve yapılandırmalar korunur. Bağımlılıklar, derleme çıktıları, önbellekler, derlenmiş dosyalar, medya, fontlar, arşivler, Office/tasarım dosyaları, kurulum/disk/veritabanı dosyaları, model ağırlıkları ve üretilmiş/geçici dosyalar dışlanır. [Tüm kurallar](../CleanZip.rules.txt).
+
+**`.env` dosyaları dahil edilir; paylaşmadan önce gizli bilgileri kontrol et.** ZIP kod inceleme içindir; projeyi çalıştırmak için dışlanan dosyalar gerekebilir. Bağlantılar atlanır. Kaynak dosyalar değişmez; eski ZIP yeni arşiv tamamlanınca değiştirilir. Seçim boşsa ZIP oluşturulmaz. UTF-8 dosya adları ve ZIP64 desteklenir.
+
+## Güncelleme ve kaldırma
+
+Güncellemek için son kurulum dosyasını çalıştır. Kaldırmak için **Yüklü uygulamalar → Clean Zip** veya Başlat menüsündeki kaldırma kısayolunu kullan. Özel kurallar güncellemede ve kaldırmada korunur.
 
 <details>
 <summary>Menü konumu ve uyumluluk</summary>
@@ -89,7 +113,7 @@ Get-FileHash .\CleanZip-Setup.exe -Algorithm SHA256
 </details>
 
 <details>
-<summary>Özel kurallar ve komut satırı</summary>
+<summary>Özel dışlama kuralları</summary>
 
 `%LOCALAPPDATA%\CleanZip\CleanZip.rules.txt` dosyasını düzenle:
 
@@ -101,15 +125,6 @@ f:Thumbs.db
 ```
 
 `d:` her derinlikte klasör adı, `e:` uzantı, `s:` dosya adı sonu, `f:` tam dosya adı. Büyük/küçük harf ayrımı yapılmaz. Dışlanan klasörlerin içine girilmez.
-
-Uygulamanın klasöründen çalıştır:
-
-```powershell
-CleanZip.exe --path "C:\Projeler\Projem" --scan-only --manifest "C:\Temp\secilenler.txt"
-CleanZip.exe --path "C:\Projeler\Projem" --output "C:\Arsiv\kaynak.zip" --no-ui
-```
-
-ZIP ve dosya listesi proje dışında ve birbirinden farklı hedeflerde olmalı.
 
 </details>
 
