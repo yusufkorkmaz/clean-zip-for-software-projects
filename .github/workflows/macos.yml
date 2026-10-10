@@ -1,0 +1,25 @@
+name: Native macOS build and Finder Quick Action
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build native executable
+        run: bash macos/Build.sh
+      - name: Test real archives and failure preservation
+        run: python3 tests/Test-Mac.py build/macos/CleanZip
+      - name: Package Finder Quick Action
+        run: python3 macos/Package.py dist/CleanZip-macOS
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: clean-zip-macos
+          path: dist/CleanZip-macOS
+          if-no-files-found: error
